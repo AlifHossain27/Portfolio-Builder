@@ -54,7 +54,7 @@ const LoginPage = () => {
     })
     if (res.ok){
       await router.refresh()
-      await router.push("/")
+      await router.push("/profile")
     }else{
       await router.refresh()
     }
@@ -68,7 +68,7 @@ const LoginPage = () => {
             </div>
       }>
     <div className='flex'>
-        <Card className='rounded-lg border-4 border-secondary h-max w-[350px]'>
+        <Card className='rounded-lg border-2 border-secondary h-max w-[350px]'>
                 <CardHeader>
                     <CardTitle className='text-2xl'>
                         Login

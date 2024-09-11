@@ -1,5 +1,5 @@
 "use client"
-import React, { Suspense } from 'react'
+import React, { Suspense, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Input } from "@/components/ui/input"
 import { Button } from '@/components/ui/button'
@@ -16,20 +16,34 @@ import {
 import {
     Form,
     FormControl,
+    FormDescription,
     FormField,
     FormItem,
     FormMessage,
 } from "@/components/ui/form"
 import Link from 'next/link'
-import { LoaderCircle } from 'lucide-react';
+import { ArrowRight, LoaderCircle } from 'lucide-react';
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 
 const formSchema = z.object({
-    firstname: z.string().min(4),
-    lastname: z.string().min(4),
-    role: z.string(),
-    aboutme: z.string(),
-    address: z.string(),
+    firstName: z.string().min(2, {
+      message: "First Name must be at least 2 characters."
+    }),
+    lastName: z.string().min(2, {
+      message: "Last Name must be at least 2 characters."
+    }),
+    age: z.string().min(1, {
+      message: "Age is required"
+    }).max(3).refine(val => !isNaN(val as unknown as number)),
+    role: z.string().min(4, {
+      message: "Role is required"
+    }),
+    aboutMe: z.string().min(4, {
+      message: "About Me is required"
+    }),
+    skills: z.string(),
+    experience: z.string(),
     email: z.string().email(),
     password: z.string().min(4, {
       message: "Password must be at least 4 characters."
@@ -38,17 +52,55 @@ const formSchema = z.object({
   
 
 const SignupPage = () => {
+    const [formStep, setFormStep] = useState(0)
     const router = useRouter()
+
+    const nextStep = async () => {
+      let fieldsToValidate: (keyof z.infer<typeof formSchema>)[] = [];
+    
+      if (formStep === 0) {
+        fieldsToValidate = ["firstName", "lastName", "age"];
+      } else if (formStep === 1) {
+        fieldsToValidate = ["role", "aboutMe"];
+      } else if (formStep === 2) {
+        fieldsToValidate = ["skills", "experience"];
+      } else if (formStep === 3) {
+        fieldsToValidate = ["email", "password"];
+      }
+
+      const isValid = await form.trigger(fieldsToValidate);
+      if (isValid) {
+        setFormStep((currentStep) => currentStep + 1);
+      }
+    };
+    const prevStep = () => setFormStep((currentStep) => currentStep - 1)
+
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
+          firstName: "",
+          lastName: "",
+          age: "",
+          role: "",
+          aboutMe: "",
+          skills: "",
+          experience: "",
           email: "",
           password: "",
         },
     })
+    {/*
+    const handleKeyDown = (event: React.KeyboardEvent<HTMLFormElement>) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+      }
+    }
+    */}
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
-      const res = await fetch("http://localhost:8000/api/",{
+      const skillsArray = values.skills.split(",").map(skill => skill.trim());
+      const experienceArray = values.experience.split(",").map(exp => exp.trim());
+      const res = await fetch("http://localhost:8000/api/signup/",{
         method: 'POST',
         headers: {'Content-Type':'application/json'},
         credentials: 'include',
@@ -58,10 +110,33 @@ const SignupPage = () => {
       })
     })
     if (res.ok){
-      await router.refresh()
-      await router.push("/")
+      console.log(res.json())
     }else{
       await router.refresh()
+    }
+
+
+    const res2 = await fetch("http://localhost:8000/api/profile/", {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      credentials: 'include',
+      body: JSON.stringify({
+        "first_name": values.firstName,
+        "last_name": values.lastName,
+        "age": Number(values.age),
+        "email": values.email,
+        "role": values.role,
+        "about_me": values.aboutMe,
+        "skills": String( "[" + skillsArray + "]"),
+        "experience": String("[" + experienceArray + "]")
+      })
+    })
+    console.log(res2.json())
+    if (res2.ok) {
+      router.push("/login")
+    }
+    else {
+      router.refresh()
     }
     }
 
@@ -73,7 +148,7 @@ const SignupPage = () => {
             </div>
       }>
     <div className='flex'>
-        <Card className='rounded-lg border-4 border-secondary h-max w-[350px]'>
+        <Card className='rounded-lg border-2 border-secondary h-max w-[350px]'>
                 <CardHeader>
                     <CardTitle className='text-2xl'>
                         Signup
@@ -85,12 +160,127 @@ const SignupPage = () => {
                 <CardContent>
                   <Form {...form}>
                       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                          <FormField
+
+                      {formStep === 0 && (
+                      <div className="space-y-3">
+                        <FormField
+                          control={form.control}
+                          name="firstName"
+                          render={({ field }) => (
+                              <FormItem>
+                                <Label>First Name: *</Label>
+                              <FormControl>
+                                  <Input autoComplete='off' placeholder="Enter your First Name" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                              </FormItem>
+                          )}
+                          />
+                        <FormField
+                          control={form.control}
+                          name="lastName"
+                          render={({ field }) => (
+                              <FormItem>
+                                <Label>Last Name: *</Label>
+                              <FormControl>
+                                  <Input autoComplete='off' placeholder="Enter your Last Name" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                              </FormItem>
+                          )}
+                          /> 
+                        <FormField
+                          control={form.control}
+                          name="age"
+                          render={({ field }) => (
+                              <FormItem>
+                                <Label>Age: *</Label>
+                              <FormControl>
+                                  <Input autoComplete='off' type='number' placeholder="Enter your Age" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                              </FormItem>
+                          )}
+                          />
+                      </div>
+                      )}
+
+                    {formStep === 1 && (
+                      <div className="space-y-3">
+                        <FormField
+                          control={form.control}
+                          name="role"
+                          render={({ field }) => (
+                              <FormItem>
+                                <Label>Role: *</Label>
+                              <FormControl>
+                                  <Input autoComplete='off' placeholder="Enter your Role" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                              </FormItem>
+                          )}
+                          />
+                        <FormField
+                          control={form.control}
+                          name="aboutMe"
+                          render={({ field }) => (
+                              <FormItem>
+                                <Label>About me: *</Label>
+                              <FormControl>
+                                  <Textarea autoComplete='off' placeholder="Enter your About me" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                              </FormItem>
+                          )}
+                          />
+                      </div>
+                      )}
+
+                    {formStep === 2 && (
+                      <div className="space-y-3">
+                        <FormField
+                          control={form.control}
+                          name="skills"
+                          render={({ field }) => (
+                              <FormItem>
+                                <Label>Skills:</Label>
+                              <FormControl>
+                                  <Textarea autoComplete='off' placeholder="Enter the skill you have" {...field} />
+                              </FormControl>
+                              <FormDescription>
+                                Separate the skills using ","
+                              </FormDescription>
+                              <FormMessage />
+                              </FormItem>
+                          )}
+                          />
+                        <FormField
+                          control={form.control}
+                          name="experience"
+                          render={({ field }) => (
+                              <FormItem>
+                                <Label>Experience:</Label>
+                              <FormControl>
+                                  <Textarea autoComplete='off' placeholder="Enter your Experience" {...field} />
+                              </FormControl>
+                              <FormDescription>
+                                Separate the experiences using ","
+                              </FormDescription>
+                              <FormMessage />
+                              </FormItem>
+                          )}
+                          />
+                        </div>
+                      )}
+
+                    {formStep === 3 && (
+                      <div className="space-y-3">
+                        <FormField
                           control={form.control}
                           name="email"
                           render={({ field }) => (
                               <FormItem>
-                                <Label>Email:</Label>
+                                <Label>Email: *</Label>
                               <FormControl>
                                   <Input autoComplete='off' placeholder="Enter your Email" {...field} />
                               </FormControl>
@@ -98,12 +288,12 @@ const SignupPage = () => {
                               </FormItem>
                           )}
                           />
-                          <FormField
+                        <FormField
                           control={form.control}
                           name="password"
                           render={({ field }) => (
                               <FormItem>
-                                <Label>Password:</Label>
+                                <Label>Password: *</Label>
                               <FormControl>
                                     <Input type='password' placeholder="Enter your Password" {...field} />
                               </FormControl>
@@ -111,9 +301,24 @@ const SignupPage = () => {
                               </FormItem>
                           )}
                           />
-                          <div className='pt-2 pb-10'>
-                          <Button className='text-center w-full h-12 text-lg' type="submit" >Login</Button>
-                          </div>
+                        </div>
+                      )}
+
+                      <div className='flex py-5 gap-4'>
+                        {formStep > 0 && (
+                          <Button className="text-center h-12 text-lg" variant="ghost" type='button' onClick={prevStep}>
+                            Previous
+                          </Button>
+                        )}
+                        {formStep < 3 ? (
+                          <Button className='text-center h-12 text-lg' type="button" onClick={nextStep}>
+                            Next Step
+                            <ArrowRight className="w-4 h-4 ml-2"/>
+                          </Button>
+                        ) : (
+                          <Button className='text-center h-12 text-lg' type="submit">Submit</Button>
+                        )}
+                      </div>
                       </form>
                   </Form>
                 </CardContent>
