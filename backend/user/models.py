@@ -43,5 +43,6 @@ class UserProfile(models.Model):
     email = models.CharField(default="", max_length=255, verbose_name="Email")
     role = models.CharField(default="", max_length=255, verbose_name="Role")
     about_me = models.TextField(default="", verbose_name="About me")
+    quote = models.CharField(default="", max_length=255, verbose_name="Quote")
     skills = models.TextField(default="[]", blank=True, verbose_name="Skills")
     experience = models.TextField(default="[]", blank=True, verbose_name="Experience")

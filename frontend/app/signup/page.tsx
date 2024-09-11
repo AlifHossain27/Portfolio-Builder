@@ -42,6 +42,7 @@ const formSchema = z.object({
     aboutMe: z.string().min(4, {
       message: "About Me is required"
     }),
+    quote: z.string(),
     skills: z.string(),
     experience: z.string(),
     email: z.string().email(),
@@ -61,9 +62,9 @@ const SignupPage = () => {
       if (formStep === 0) {
         fieldsToValidate = ["firstName", "lastName", "age"];
       } else if (formStep === 1) {
-        fieldsToValidate = ["role", "aboutMe"];
+        fieldsToValidate = ["quote", "aboutMe"];
       } else if (formStep === 2) {
-        fieldsToValidate = ["skills", "experience"];
+        fieldsToValidate = ["role", "skills", "experience"];
       } else if (formStep === 3) {
         fieldsToValidate = ["email", "password"];
       }
@@ -83,19 +84,13 @@ const SignupPage = () => {
           age: "",
           role: "",
           aboutMe: "",
+          quote: "",
           skills: "",
           experience: "",
           email: "",
           password: "",
         },
     })
-    {/*
-    const handleKeyDown = (event: React.KeyboardEvent<HTMLFormElement>) => {
-      if (event.key === 'Enter') {
-        event.preventDefault();
-      }
-    }
-    */}
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
       const skillsArray = values.skills.split(",").map(skill => skill.trim());
@@ -127,6 +122,7 @@ const SignupPage = () => {
         "email": values.email,
         "role": values.role,
         "about_me": values.aboutMe,
+        "quote": values.quote,
         "skills": String( "[" + skillsArray + "]"),
         "experience": String("[" + experienceArray + "]")
       })
@@ -209,12 +205,12 @@ const SignupPage = () => {
                       <div className="space-y-3">
                         <FormField
                           control={form.control}
-                          name="role"
+                          name="quote"
                           render={({ field }) => (
                               <FormItem>
-                                <Label>Role: *</Label>
+                                <Label>Favourite Quote</Label>
                               <FormControl>
-                                  <Input autoComplete='off' placeholder="Enter your Role" {...field} />
+                                  <Input autoComplete='off' placeholder="Enter your favourite quote" {...field} />
                               </FormControl>
                               <FormMessage />
                               </FormItem>
@@ -238,6 +234,19 @@ const SignupPage = () => {
 
                     {formStep === 2 && (
                       <div className="space-y-3">
+                        <FormField
+                          control={form.control}
+                          name="role"
+                          render={({ field }) => (
+                              <FormItem>
+                                <Label>Role: *</Label>
+                              <FormControl>
+                                  <Input autoComplete='off' placeholder="Enter your Role" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                              </FormItem>
+                          )}
+                          />
                         <FormField
                           control={form.control}
                           name="skills"

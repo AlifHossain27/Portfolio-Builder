@@ -7,7 +7,7 @@ export default function Home() {
       <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
         <div className="flex gap-5">
           <Link href="/login"><Button variant="default">Login</Button></Link>
-          <Link href="/signup"><Button variant="secondary">Sign Up</Button></Link>
+          <Link href="/signup"><Button variant="secondary" >Sign Up</Button></Link>
         </div>
       </main>
     </div>
